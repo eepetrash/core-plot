@@ -45,6 +45,7 @@ typedef NSMutableArray<CPTFill *> CPTMutableFillArray;
 /// @{
 -(void)fillRect:(CGRect)rect inContext:(nonnull CGContextRef)context;
 -(void)fillPathInContext:(nonnull CGContextRef)context;
+-(void)fillPathInContext:(nonnull CGContextRef)context lowerLimit:(CGFloat)lowerLimit upperLimit:(CGFloat)upperLimit;
 /// @}
 
 @end

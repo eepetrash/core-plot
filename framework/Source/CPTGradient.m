@@ -891,6 +891,37 @@ static void CPTResolveHSV(CGFloat *__nonnull color1, CGFloat *__nonnull color2);
     }
 }
 
+-(void)fillPathInContext:(nonnull CGContextRef)context lowerLimit:(CGFloat)lowerLimit upperLimit:(CGFloat)upperLimit
+{
+    if ( !CGContextIsPathEmpty(context) ) {
+        CGShadingRef myCGShading = NULL;
+        
+        CGContextSaveGState(context);
+        
+        CGRect bounds = CGContextGetPathBoundingBox(context);
+        
+        bounds.origin.y = lowerLimit;
+        bounds.size.height = upperLimit - lowerLimit;
+        
+        CGContextClip(context);
+        
+        switch ( self.gradientType ) {
+            case CPTGradientTypeAxial:
+                myCGShading = [self newAxialGradientInRect:bounds];
+                break;
+                
+            case CPTGradientTypeRadial:
+                myCGShading = [self newRadialGradientInRect:bounds context:context];
+                break;
+        }
+        
+        CGContextDrawShading(context, myCGShading);
+        
+        CGShadingRelease(myCGShading);
+        CGContextRestoreGState(context);
+    }
+}
+
 #pragma mark -
 #pragma mark Opacity
 

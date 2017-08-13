@@ -64,6 +64,11 @@
     CGContextRestoreGState(context);
 }
 
+-(void)fillPathInContext:(nonnull CGContextRef)context lowerLimit:(CGFloat)lowerLimit upperLimit:(CGFloat)upperLimit
+{
+    [self fillPathInContext:context];
+}
+
 #pragma mark -
 #pragma mark Opacity
 

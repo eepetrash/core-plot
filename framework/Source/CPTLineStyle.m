@@ -277,6 +277,21 @@
     }
 }
 
+-(void)strokePathInContext:(nonnull CGContextRef)context lowerLimit:(CGFloat)lowerLimit upperLimit:(CGFloat)upperLimit
+{
+    CPTFill *fill = self.lineFill;
+    if (fill) {
+        CGContextReplacePathWithStrokedPath(context);
+        [fill fillPathInContext:context lowerLimit:lowerLimit upperLimit:upperLimit];
+    }
+    else {
+        [self strokePathInContext:context];
+    }
+    
+    
+}
+
+
 /** @brief Stroke a rectangular path in the given graphics context.
  *  Call @link CPTLineStyle::setLineStyleInContext: -setLineStyleInContext: @endlink first to set up the drawing properties.
  *

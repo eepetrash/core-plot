@@ -132,6 +132,14 @@ CPTScatterPlotBinding const CPTScatterPlotBindingPlotSymbols = @"plotSymbols"; /
  **/
 @synthesize areaBaseValue;
 
+/** @property nullable NSNumber *areaUpperValue
+ *  @brief The Y coordinate of the straight upper boundary of the area fill.
+ *  If not a number, the plot max value is used.
+ *
+ *  @ingroup plotBindingsScatterPlot
+ **/
+@synthesize areaUpperValue;
+
 /** @property nullable NSNumber *areaBaseValue2
  *  @brief The Y coordinate of the straight boundary of the secondary area fill.
  *  If not a number, the area is not filled.
@@ -221,6 +229,7 @@ CPTScatterPlotBinding const CPTScatterPlotBindingPlotSymbols = @"plotSymbols"; /
  *  - @ref areaFill = @nil
  *  - @ref areaFill2 = @nil
  *  - @ref areaBaseValue = @NAN
+ *  - @ref areaUpperValue = @NAN
  *  - @ref areaBaseValue2 = @NAN
  *  - @ref plotSymbolMarginForHitDetection = @num{0.0}
  *  - @ref plotLineMarginForHitDetection = @num{4.0}
@@ -242,6 +251,7 @@ CPTScatterPlotBinding const CPTScatterPlotBindingPlotSymbols = @"plotSymbols"; /
         areaFill                        = nil;
         areaFill2                       = nil;
         areaBaseValue                   = @(NAN);
+        areaUpperValue                  = @(NAN);
         areaBaseValue2                  = @(NAN);
         plotSymbolMarginForHitDetection = CPTFloat(0.0);
         plotLineMarginForHitDetection   = CPTFloat(4.0);
@@ -271,6 +281,7 @@ CPTScatterPlotBinding const CPTScatterPlotBindingPlotSymbols = @"plotSymbols"; /
         areaFill                                = theLayer->areaFill;
         areaFill2                               = theLayer->areaFill2;
         areaBaseValue                           = theLayer->areaBaseValue;
+        areaUpperValue                          = theLayer->areaUpperValue;
         areaBaseValue2                          = theLayer->areaBaseValue2;
         plotSymbolMarginForHitDetection         = theLayer->plotSymbolMarginForHitDetection;
         plotLineMarginForHitDetection           = theLayer->plotLineMarginForHitDetection;
@@ -307,6 +318,7 @@ CPTScatterPlotBinding const CPTScatterPlotBindingPlotSymbols = @"plotSymbols"; /
     [coder encodeObject:self.areaFill2 forKey:@"CPTScatterPlot.areaFill2"];
     [coder encodeObject:self.mutableAreaFillBands forKey:@"CPTScatterPlot.mutableAreaFillBands"];
     [coder encodeObject:self.areaBaseValue forKey:@"CPTScatterPlot.areaBaseValue"];
+    [coder encodeObject:self.areaUpperValue forKey:@"CPTScatterPlot.areaUpperValue"];
     [coder encodeObject:self.areaBaseValue2 forKey:@"CPTScatterPlot.areaBaseValue2"];
     [coder encodeCGFloat:self.plotSymbolMarginForHitDetection forKey:@"CPTScatterPlot.plotSymbolMarginForHitDetection"];
     [coder encodeCGFloat:self.plotLineMarginForHitDetection forKey:@"CPTScatterPlot.plotLineMarginForHitDetection"];
@@ -336,6 +348,8 @@ CPTScatterPlotBinding const CPTScatterPlotBindingPlotSymbols = @"plotSymbols"; /
                                                       forKey:@"CPTScatterPlot.mutableAreaFillBands"] mutableCopy];
         areaBaseValue = [coder decodeObjectOfClass:[NSNumber class]
                                             forKey:@"CPTScatterPlot.areaBaseValue"];
+        areaUpperValue = [coder decodeObjectOfClass:[NSNumber class]
+                                            forKey:@"CPTScatterPlot.areaUpperValue"];
         areaBaseValue2 = [coder decodeObjectOfClass:[NSNumber class]
                                              forKey:@"CPTScatterPlot.areaBaseValue2"];
         plotSymbolMarginForHitDetection         = [coder decodeCGFloatForKey:@"CPTScatterPlot.plotSymbolMarginForHitDetection"];
@@ -828,22 +842,30 @@ CPTScatterPlotBinding const CPTScatterPlotBindingPlotSymbols = @"plotSymbols"; /
 
         // Draw fills
         NSDecimal theAreaBaseValue;
+        NSDecimal theAreaUpperValue;
         CPTFill *theFill = nil;
 
+        // Reuse fill code for lower-upper limits of line drawing
+        NSNumber *lowerLineLimit = nil;
+        NSNumber *upperLineLimit = nil;
+        
         for ( NSUInteger i = 0; i < 2; i++ ) {
             switch ( i ) {
                 case 0:
                     theAreaBaseValue = self.areaBaseValue.decimalValue;
+                    theAreaUpperValue = self.areaUpperValue.decimalValue;
                     theFill          = self.areaFill;
                     break;
 
                 case 1:
                     theAreaBaseValue = self.areaBaseValue2.decimalValue;
+                    theAreaUpperValue = CPTDecimalNaN();
                     theFill          = self.areaFill2;
                     break;
 
                 default:
                     theAreaBaseValue = CPTDecimalNaN();
+                    theAreaUpperValue = CPTDecimalNaN();
                     break;
             }
             if ( !NSDecimalIsNotANumber(&theAreaBaseValue) ) {
@@ -868,7 +890,24 @@ CPTScatterPlotBinding const CPTScatterPlotBindingPlotSymbols = @"plotSymbols"; /
                     if ( theFill ) {
                         CGContextBeginPath(context);
                         CGContextAddPath(context, dataLinePath);
-                        [theFill fillPathInContext:context];
+                        
+                        if (!NSDecimalIsNotANumber(&theAreaUpperValue)) {
+                            
+                            plotPoint[CPTCoordinateY] = theAreaUpperValue;
+                            CGPoint upperPoint = [self convertPoint:[thePlotSpace plotAreaViewPointForPlotPoint:plotPoint numberOfCoordinates:2] fromLayer:thePlotArea];
+                            if ( pixelAlign ) {
+                                upperPoint = CPTAlignIntegralPointToUserSpace(context, upperPoint);
+                            }
+
+                            lowerLineLimit = [NSNumber numberWithFloat:baseLinePoint.y];
+                            upperLineLimit = [NSNumber numberWithFloat:upperPoint.y];
+                            
+                            [theFill fillPathInContext:context lowerLimit:baseLinePoint.y upperLimit:upperPoint.y];
+                        }
+                        else {
+                            [theFill fillPathInContext:context];
+                        }
+                        
                     }
 
                     // Draw fill bands
@@ -923,7 +962,14 @@ CPTScatterPlotBinding const CPTScatterPlotBindingPlotSymbols = @"plotSymbols"; /
             CGContextBeginPath(context);
             CGContextAddPath(context, dataLinePath);
             [theLineStyle setLineStyleInContext:context];
-            [theLineStyle strokePathInContext:context];
+            
+            if (lowerLineLimit && upperLineLimit) {
+                [theLineStyle strokePathInContext:context lowerLimit:[lowerLineLimit floatValue] upperLimit:[upperLineLimit floatValue]];
+            }
+            else {
+                [theLineStyle strokePathInContext:context];
+            }
+            
             CGPathRelease(dataLinePath);
         }
 
@@ -1669,6 +1715,7 @@ CPTScatterPlotBinding const CPTScatterPlotBindingPlotSymbols = @"plotSymbols"; /
 
     dispatch_once(&onceToken, ^{
         keys = [NSSet setWithArray:@[@"areaBaseValue",
+                                     @"areaUpperValue",
                                      @"areaBaseValue2"]];
     });
 
@@ -2270,6 +2317,21 @@ CPTScatterPlotBinding const CPTScatterPlotBindingPlotSymbols = @"plotSymbols"; /
         areaBaseValue = newAreaBaseValue;
         [self setNeedsDisplay];
         [[NSNotificationCenter defaultCenter] postNotificationName:CPTLegendNeedsRedrawForPlotNotification object:self];
+    }
+}
+
+- (void)setAreaUpperValue:(NSNumber *)newAreaUpperValue
+{
+    BOOL needsUpdate = YES;
+    
+    if ( newAreaUpperValue ) {
+        NSNumber *upperValue = newAreaUpperValue;
+        needsUpdate = ![areaUpperValue isEqualToNumber:upperValue];
+    }
+    
+    if ( needsUpdate ) {
+        areaUpperValue = newAreaUpperValue;
+        [self setNeedsDisplay];
     }
 }
 

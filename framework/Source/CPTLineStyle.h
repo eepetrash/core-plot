@@ -40,6 +40,7 @@ typedef NSMutableArray<CPTLineStyle *> CPTMutableLineStyleArray;
 /// @{
 -(void)setLineStyleInContext:(nonnull CGContextRef)context;
 -(void)strokePathInContext:(nonnull CGContextRef)context;
+-(void)strokePathInContext:(nonnull CGContextRef)context lowerLimit:(CGFloat)lowerLimit upperLimit:(CGFloat)upperLimit;
 -(void)strokeRect:(CGRect)rect inContext:(nonnull CGContextRef)context;
 /// @}
 

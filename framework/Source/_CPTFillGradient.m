@@ -58,6 +58,11 @@
     [self.fillGradient fillPathInContext:context];
 }
 
+-(void)fillPathInContext:(nonnull CGContextRef)context lowerLimit:(CGFloat)lowerLimit upperLimit:(CGFloat)upperLimit
+{
+    [self.fillGradient fillPathInContext:context lowerLimit:lowerLimit upperLimit:upperLimit];
+}
+
 #pragma mark -
 #pragma mark Opacity
 

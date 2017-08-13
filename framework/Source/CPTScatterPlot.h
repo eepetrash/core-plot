@@ -248,6 +248,8 @@ typedef NS_ENUM (NSInteger, CPTScatterPlotHistogramOption) {
 /// @name Appearance
 /// @{
 @property (nonatomic, readwrite, strong, nullable) NSNumber *areaBaseValue;
+@property (nonatomic, readwrite, strong, nullable) NSNumber *areaUpperValue;
+
 @property (nonatomic, readwrite, strong, nullable) NSNumber *areaBaseValue2;
 @property (nonatomic, readwrite, assign) CPTScatterPlotInterpolation interpolation;
 @property (nonatomic, readwrite, assign) CPTScatterPlotHistogramOption histogramOption;

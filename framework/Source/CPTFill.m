@@ -199,6 +199,11 @@
     // do nothing--subclasses override to do drawing here
 }
 
+-(void)fillPathInContext:(nonnull CGContextRef)context lowerLimit:(CGFloat)lowerLimit upperLimit:(CGFloat)upperLimit
+{
+    // do nothing--subclasses override to do drawing here
+}
+
 #pragma mark -
 #pragma mark Debugging
 

@@ -99,6 +99,7 @@ typedef NS_ENUM (NSInteger, CPTGradientType) {
 -(void)drawSwatchInRect:(CGRect)rect inContext:(nonnull CGContextRef)context;
 -(void)fillRect:(CGRect)rect inContext:(nonnull CGContextRef)context;
 -(void)fillPathInContext:(nonnull CGContextRef)context;
+-(void)fillPathInContext:(nonnull CGContextRef)context lowerLimit:(CGFloat)lowerLimit upperLimit:(CGFloat)upperLimit;
 /// @}
 
 @end
